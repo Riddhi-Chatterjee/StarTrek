@@ -127,7 +127,7 @@ with open("Exercises/"+str(exercise)+"/master_dataset.txt", 'r') as ms:
                 if i != testIndex:
                     tr.write(line)
                 else:
-                    ts.write(line)
+                    ts.write(line) 
 
 device = 'cpu'
 if torch.cuda.is_available():
