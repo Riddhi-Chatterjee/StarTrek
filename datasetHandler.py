@@ -13,46 +13,58 @@ import shutil
 #import openpyxl
 from pathlib import Path
 
-def readSourceFile(filename):
-    with open(filename, "r") as csv:
-        visitedLines = 0
-        data = []
-        for line in csv:
-            line = line.split("\n")[0]
-            tmp = [float(x) for x in line.split(", ")]
-            data.append(tmp)
-    return data
+class datasetHandler(object):
+    def readSourceFile(self, filename):
+        numIntervalsInDay = 75
+        with open(filename, "r") as csv:
+            visitedLines = 0
+            data = []
+            for line in csv:
+                line = line.split("\n")[0]
+                tmp = [float(x) for x in line.split(", ")]
+                if len(tmp) == numIntervalsInDay:
+                    data.append(tmp)
+        return data
 
-def splitData(data, window):
-    n = len(data)
-    train = []
-    test = []
-    for i in range(n-window+1):
-        train.append(data[i:i+window-1])
-        test.append(data[i+window-1])
-    return (train, test)
+    def splitData(self, data, window):
+        n = len(data)
+        train = []
+        test = []
+        for i in range(n-window+1):
+            train.append(data[i:i+window-1])
+            test.append(data[i+window-1])
+        return (train, test)
 
-def writeDestFile(filename, train, test):
-    n = len(train)
-    with open(filename, "w") as txt:
-        for i in range(n):
-            line = str(test[i]) + ":" + str(train[i])
-            txt.write(line)
+    def writeDestFile(self, filename, train, test):
+        n = len(train)
+        with open(filename, "w") as txt:
+            for i in range(n):
+                line = str(test[i]) + ":" + str(train[i]) + "\n"
+                txt.write(line)
+
+
+    def createDataset(self, stockname, windowsize):
+        sourcefile = self.sourceFile(stockname)
+        destinationfile = self.destinationFile(stockname)
+        rawdata = self.readSourceFile(filename=sourcefile)
+        (train, test) = self.splitData(data=rawdata, window=windowsize)
+        self.writeDestFile(destinationfile, train, test)
+
+
+    def sourceFile(self, stockname): 
+        filename = "datasets/5mins_" + stockname + ".csv"
+        return filename
+
+    def destinationFile(self, stockname):
+        filename = "datasets/5mins_" + stockname + "_MD.txt"
+        return filename
     
-
-def handleData(sourcefile, destinationfile, windowsize):
-    rawdata = readSourceFile(filename=sourcefile)
-    (train, test) = splitData(data=rawdata, window=windowsize)
-    writeDestFile(destinationfile, train, test)
-
-
-def sourceFile(stockname): 
-    filename = "datasets/5mins_" + stockname + ".csv"
-    return filename
-
-def destinationFile(stockname):
-    filename = "datasets/5mins_" + stockname + "_MD.txt"
-    return filename
+    def shuffleDataset(self, folder, filename): #Shuffle the lines in datasets/master_dataset.txt
+                              #We can't store all the contents of datasets/master_dataset.txt in some list due to memory constraint
+        
+        lines = open(folder+"/"+filename).readlines()
+        random.shuffle(lines)
+        open(folder+"/"+filename,'w').writelines(lines)
 
 
 class LSTMdataset(Dataset):
@@ -71,12 +83,13 @@ class LSTMdataset(Dataset):
 
         # here the first column is the class label, the rest is the frame sequence
         #self.x_data = torch.tensor(seqList, dtype=torch.float32) # size [n_samples, n_time_steps, n_features]
+        self.l_data = [len(seq) for seq in seqList]
         self.x_data = self.padData(seqList)
         self.y_data = torch.tensor([self.strToList(x) for x in xy[:, 0]]).to(self.device) # size [n_samples, 1]
 
     # support indexing such that dataset[i] can be used to get i-th sample
     def __getitem__(self, index):
-        return self.x_data[index], self.y_data[index]
+        return self.x_data[index], self.y_data[index], self.l_data[index]
 
     # call len(dataset) to return the size
     def __len__(self):
@@ -124,8 +137,7 @@ class LSTMdataset(Dataset):
 if __name__ == "__main__":
     stockname = str(input())
     windowsize = int(input())
-    sourcefile = sourceFile(stockname)
-    destinationfile = destinationFile(stockname)
-    handleData(sourcefile, destinationfile, windowsize)
+    dh = datasetHandler()
+    dh.createDataset(stockname, windowsize)
     dataset = LSTMdataset("datasets", "5mins_APPLE_MD.txt")
-    print(dataset[0][1])
+    print(len(dataset))
