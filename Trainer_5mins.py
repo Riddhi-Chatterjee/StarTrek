@@ -1,4 +1,4 @@
-import datasetHandler
+import datasetHandler_5mins
 import VS_LSTM_5mins
 #import LSTM
 import signal
@@ -87,7 +87,7 @@ with open("settings/5mins_"+stock+".txt", 'r') as s:
 #Settings:
 criterion = nn.MSELoss().to(device)
 
-dataset = datasetHandler.LSTMdataset("datasets", "5mins_"+stock+"_MD.txt")
+dataset = datasetHandler_5mins.LSTMdataset("datasets", "5mins_"+stock+"_MD.txt")
 #total_samples = len(dataset)
 #n_iterations = math.ceil(total_samples/batchSize)
 inputSize = len(dataset[0][0][0])
@@ -118,12 +118,12 @@ loss = "Dummy Initialisation"
 ch = input("Use existing datasets? Y/N: ")
 
 if ch.upper() == "N":
-    ds = datasetHandler.datasetHandler()
+    ds = datasetHandler_5mins.datasetHandler()
     windowSize = int(input("Enter the windowSize: "))
     ds.createDataset(stock, windowSize)
     ds.shuffleDataset("datasets", "5mins_"+stock+"_MD.txt")
     
-    dataset = datasetHandler.LSTMdataset("datasets", "5mins_"+stock+"_MD.txt")
+    dataset = datasetHandler_5mins.LSTMdataset("datasets", "5mins_"+stock+"_MD.txt")
     #total_samples = len(dataset)
     #n_iterations = math.ceil(total_samples/batchSize)
     inputSize = len(dataset[0][0][0])
