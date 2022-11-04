@@ -5,3 +5,4 @@ while(True):
     if i%1000000 == 0:
         with open("DUMMY.txt", "a") as d:
             d.write("Current value of i: "+str(i)+"\n")
+    break
