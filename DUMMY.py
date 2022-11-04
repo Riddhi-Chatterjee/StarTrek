@@ -1,5 +1,5 @@
 print("Running infinite loop...")
-i=0
+i=200
 while(True):
     i = (i + 1) % 100000000
     with open("DUMMY.txt", "a") as d:
