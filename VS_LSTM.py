@@ -12,13 +12,13 @@ def signal_handler(sig, frame):
 signal.signal(signal.SIGINT, signal_handler)
 
 class LSTM(nn.Module):
-    def __init__(self, nb_layers, nb_lstm_units, inputSize):
+    def __init__(self, nb_layers, hidden_size, inputSize):
         super(LSTM, self).__init__()   
         self.device = 'cpu'
         if torch.cuda.is_available():
             self.device = 'cuda'
         self.nb_layers = nb_layers
-        self.nb_lstm_units = nb_lstm_units
+        self.hidden_size = hidden_size
         self.input_size = inputSize
 
         # build actual NN
@@ -28,21 +28,21 @@ class LSTM(nn.Module):
         # design LSTM
         self.lstm = nn.LSTM(
             input_size = self.input_size,
-            hidden_size=self.nb_lstm_units,
+            hidden_size=self.hidden_size,
             num_layers=self.nb_layers,
             batch_first=True,
         ).to(self.device)
 
         # linear layer:
-        self.fully_connected = nn.Linear(self.nb_lstm_units, 75).to(self.device)
+        self.fully_connected = nn.Linear(self.hidden_size, self.input_size).to(self.device)
         
         #Sigmoid layer:
         self.sigmoid = nn.Sigmoid().to(self.device)
 
     def init_hidden(self):
-        # the weights are of the form (nb_layers, batch_size, nb_lstm_units)
-        hidden_a = torch.rand(self.nb_layers, self.batch_size, self.nb_lstm_units).to(self.device)
-        hidden_b = torch.rand(self.nb_layers, self.batch_size, self.nb_lstm_units).to(self.device)
+        # the weights are of the form (nb_layers, batch_size, hidden_size)
+        hidden_a = torch.rand(self.nb_layers, self.batch_size, self.hidden_size).to(self.device)
+        hidden_b = torch.rand(self.nb_layers, self.batch_size, self.hidden_size).to(self.device)
 
         hidden_a = Variable(hidden_a)
         hidden_b = Variable(hidden_b)
@@ -92,7 +92,7 @@ class LSTM(nn.Module):
         
         self.hidden = self.init_hidden()
 
-        # Dim transformation: (batch_size, seq_len, embedding_dim) -> (batch_size, seq_len, nb_lstm_units)
+        # Dim transformation: (batch_size, seq_len, embedding_dim) -> (batch_size, seq_len, hidden_size)
 
         # pack_padded_sequence so that padded items in the sequence won't be shown to the LSTM
         out = torch.nn.utils.rnn.pack_padded_sequence(X, X_lengths, batch_first=True)
@@ -116,17 +116,20 @@ class LSTM(nn.Module):
         return out
     
 def main():
-    inputSize = 4
-    model = LSTM(4, 2*inputSize, inputSize)
-    #[1, 5, 30, -1]
-    X1 = torch.tensor([[[1, 20, 45, -1], [-1, 25, 50, 1], [1, 30, 55, -1], [-1, 35, 60, 1]], [[1, 20, 45, -1], [1, 15, 40, -1], [1, 10, 35, -1], [0, 0, 0, 0]]], dtype=torch.float32)
-    X_lengths1 = [4, 4]
-    X2 = torch.tensor([[[1, 20, 45, -1], [1, 15, 40, -1], [1, 10, 35, -1], [0, 0, 0, 0]], [[1, 20, 45, -1], [-1, 25, 50, 1], [1, 30, 55, -1], [-1, 35, 60, 1]]], dtype=torch.float32)
-    X_lengths2 = [4, 4]
-    #X_lengths = [4, 4, 2]
+    inputSize = 75
+    model_5mins = LSTM(4, 2*inputSize, inputSize)
+    
+    inputSize = 1
+    model_5mins_Gran = LSTM(4, 13+(2*inputSize), inputSize)
+    
+    inputSize = 6
+    model_1day = LSTM(4, 13+(2*inputSize), inputSize)
+    
+    X = torch.tensor([[[1, 20, 45, -1, 65, 87], [-1, 25, 50, 1, 78, 89], [1, 30, 55, -1, 86, 78], [-1, 35, 60, 1, 8, 66]], [[1, 20, 45, -1, 57, 75], [1, 15, 40, -1, 8, 78], [1, 10, 35, -1, 89, 8], [0, 0, 0, 0, 0, 0]]], dtype=torch.float32)
+    X_lengths = [4, 4]
+    
     print("")
-    print(model(X1, X_lengths1))
-    print(model(X2, X_lengths2))
+    print(model_1day(X, X_lengths))
     print("")
     
 if __name__ == "__main__":

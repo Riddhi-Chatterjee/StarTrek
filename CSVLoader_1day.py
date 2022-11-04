@@ -1,3 +1,5 @@
+#NOTE: Currently this loader has some issues with the abbreviations used for the stock names
+
 import pandas as pd
 import numpy as np
 import schedule
