@@ -10,7 +10,7 @@ from datetime import datetime
 def extractDate(dt):
     return str(dt)[:10]
 
-def loadPrice(stock_name, isStartOfDay):
+def loadPrice(stock_name):
     if not exists("datasets/1day_"+stock_name+".csv"):
         end = datetime.now()
         start = datetime(end.year - 1, end.month, end.day)
@@ -27,4 +27,22 @@ def loadPrice(stock_name, isStartOfDay):
             string = ",".join(str(v) for v in stock_df.values.tolist()[0])
             ds.write(string + '\n')
 
-loadPrice('AAPL', True)
+
+def job():
+    stock_list = ['larsen and toubro', 'tata steel', 'paytm']
+    threads = []
+    
+    for stock_name in stock_list:
+        threads.append(threading.Thread(target=loadPrice, args=(stock_name,)))
+    
+    for thread in threads:
+        thread.start()
+        
+    for thread in threads:
+        thread.join()
+
+schedule.every().day.at("19" + ":00").do(job)
+
+while True:
+    schedule.run_pending()
+    time.sleep(1)
