@@ -8,7 +8,11 @@ from webdriver_manager.chrome import ChromeDriverManager
 import schedule
 import time
 from os.path import exists
+from datetime import datetime
 import threading
+
+def extractDate(dt):
+    return str(dt)[:10]
 
 def loadPrice(stock_name, isStartOfDay, chromeDriverPath):
     options = Options()
@@ -25,11 +29,18 @@ def loadPrice(stock_name, isStartOfDay, chromeDriverPath):
         price = price.replace("USD", "")
         if not exists("datasets/5mins_"+stock_name+".csv"):
             with open("datasets/5mins_"+stock_name+".csv", "a") as ds:
-                ds.write(str(price))
+                string = "Date, 09:15, 09:30, 09:45, 09:50, 09:55, "
+                temp = ""
+                for i in range(10, 15):
+                    temp = temp + str(i) + ":00, " + str(i) + ":05, " + str(i) + ":10, " + str(i) + ":15, " + str(i) + ":20, " + str(i) + ":25, " + str(i) + ":30, " + str(i) + ":35, " + str(i) + ":40, " + str(i) + ":45, " + str(i) + ":50, " + str(i) + ":55, "
+
+                string = string + temp + "15:00, " + "15:05, " + "15:10, " + "15:15, " + "15:20, " + "15:25, " + "15:30"
+                ds.write(string + "\n")
+                ds.write(str(extractDate(datetime.today())) + ", " + str(price))
         else:
             with open("datasets/5mins_"+stock_name+".csv", "a") as ds:
                 if isStartOfDay:
-                    ds.write("\n"+str(price))
+                    ds.write("\n"+str(extractDate(datetime.today())) + str(price))
                 else:
                     ds.write(", "+str(price))
         
@@ -63,19 +74,19 @@ def job(isStartOfDay, chromeDriverPath):
 
 def sched(hr, chromeDriverPath):
     
-    schedule.every().day.at(str(hr) + ":49").do(job, True, chromeDriverPath)
-    schedule.every().day.at(str(hr) + ":50").do(job, False, chromeDriverPath)
-    schedule.every().day.at(str(hr) + ":51").do(job, False, chromeDriverPath)
-    schedule.every().day.at(str(hr) + ":52").do(job, False, chromeDriverPath)
-    schedule.every().day.at(str(hr) + ":31").do(job, False, chromeDriverPath)
+    schedule.every().day.at(str(hr) + ":37").do(job, True, chromeDriverPath)
+    schedule.every().day.at(str(hr) + ":38").do(job, False, chromeDriverPath)
+    schedule.every().day.at(str(hr) + ":39").do(job, False, chromeDriverPath)
     schedule.every().day.at(str(hr) + ":40").do(job, False, chromeDriverPath)
+    schedule.every().day.at(str(hr) + ":41").do(job, False, chromeDriverPath)
+    schedule.every().day.at(str(hr) + ":42").do(job, False, chromeDriverPath)
+    schedule.every().day.at(str(hr) + ":43").do(job, False, chromeDriverPath)
+    schedule.every().day.at(str(hr) + ":44").do(job, False, chromeDriverPath)
     schedule.every().day.at(str(hr) + ":45").do(job, False, chromeDriverPath)
-    schedule.every().day.at(str(hr) + ":50").do(job, False, chromeDriverPath)
-    schedule.every().day.at(str(hr) + ":55").do(job, False, chromeDriverPath)
-    schedule.every().day.at(str(hr) + ":00").do(job, False, chromeDriverPath)
+    schedule.every().day.at(str(hr) + ":46").do(job, False, chromeDriverPath)
 
 chromeDriverPath = ChromeDriverManager().install()
-for i in range(23,24):
+for i in range(17,24):
     sched(i, chromeDriverPath)
 
 while True:
